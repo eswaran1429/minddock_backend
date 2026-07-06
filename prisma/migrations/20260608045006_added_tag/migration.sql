@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Memory" ALTER COLUMN "tags" SET DEFAULT ARRAY[]::TEXT[];
