@@ -26,9 +26,13 @@ const uploadImage = async (req, res) => {
 
         const result = await streamUpload();
 
-        return res.json({
-            imageUrl: result.secure_url,
-            publicId: result.public_id,
+        return res.status(200).json({
+            success: true,
+            message: "Image uploaded successfully",
+            data: {
+                imageUrl: result.secure_url,
+                publicId: result.public_id,
+            }
         });
     } catch (err) {
         console.error(err);
