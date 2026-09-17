@@ -3,8 +3,4 @@ node_modules
 .env
 .claude/
 .agents/
-<<<<<<< HEAD
-=======
-
->>>>>>> master
 /generated/prisma
