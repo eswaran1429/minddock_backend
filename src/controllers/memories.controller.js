@@ -120,9 +120,8 @@ const searchMemories = async (req, res) => {
                 },
             },
             orderBy: {
-                date: "desc",
+                memoryDate: "desc",
             },
-            // skip: skip,
             take: limit
         });
 
@@ -135,6 +134,33 @@ const searchMemories = async (req, res) => {
             message: error.message,
         });
     }
+};
+
+const test = async (req, res) => {
+
+    const searchText = req.params.q;
+
+    const memories = await prisma.memory.findMany({
+        where: {
+            userId: req.user.id,
+            content: {
+                contains: searchText,
+                mode: "insensitive",
+            },
+        },
+        orderBy: {
+            memoryDate: "desc",
+        },
+        // skip: skip,
+        take: limit
+    });
+
+    return res.json({
+        success: true,
+        message: "Memory fetched successfully",
+        data: memories
+    });
+
 };
 
 const timelineMemories = async (req, res) => {
