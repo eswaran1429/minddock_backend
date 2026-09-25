@@ -4,3 +4,4 @@ node_modules
 .claude/
 .agents/
 /generated/prisma
+BACKEND_AUDIT.md

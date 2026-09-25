@@ -4,148 +4,25 @@ const prisma = require("../config/prisma");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const signupUser = async (req, res) => {
+const updateProfile = async (res, req) => {
     try {
-        const { name, email, password } = req.body;
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-        if (!emailRegex.test(email)) {
-            return res.status(400).json({
-                message: "invalid email",
-            });
-        }
-
-        const uniqueUser = await prisma.user.findUnique({
+        const token = req.authorization.headers;
+        const user = prisma.user.update({
             where: {
-                email: email
-            }
-        });
-        if (uniqueUser) {
-            return res.status(400).json({
-                message: "user already exists",
-            });
-        }
-
-        const user = await prisma.user.create({
-            data: {
-                name: name,
-                email: email,
-                password: hashedPassword,
-            }
-        });
-
-        const token = jwt.sign({
-            id: user.id
-        }, 'superSecretKey', {
-            expiresIn: "1h"
-        });
-        return res.json({
-            message: "user created successfully",
-            token: token,
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                createdAt: user.createdAt
-            }
-        });
-    } catch (e) {
-        return res.status(500).json({
-            message: "user not created because " + e,
-        });
-    }
-};
-
-const loginUser = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-
-        const user = await prisma.user.findUnique({
-            where: {
-                email: email,
-            }
-        });
-
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: "User not found"
-            });
-        }
-
-        const match = await bcrypt.compare(
-            password,
-            user.password
-        );
-
-        if (!match) {
-            return res.status(401).json({
-                success: false,
-                message: "Invalid email or password",
-            });
-        }
-
-        const token = jwt.sign(
-            {
-                id: user.id
+                token: token
             },
-            process.env.JWT_SECRET,
-            {
-                expiresIn: "7d"
-            }
-        );
-
-        return res.status(200).json({
-            success: true,
-            message: "User logged in successfully",
             data: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                createdAt: user.createdAt,
+                name: req.name,
+                email: req.email,
 
-            }, token: token,
-        });
-
-    } catch (e) {
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error",
-            error: e.message
-        });
-    }
-};
-
-
-const profile = async (req, res) => {
-    try {
-        const token = await jwt.verify(req.headers.authorization, process.env.JWT_SECRET);
-
-        const user = await prisma.user.findUnique({
-            where: {
-                id: token.id,
-            },
-            select: {
-                id: true,
-                name: true,
-                email: true,
-                createdAt: true
             }
-        });
-
-        return res.status(200).json({
-            success: true,
-            message: "User profile fetched successfully",
-            data: user,
-        });
-
+        })
     } catch (error) {
-
         return res.status(500).json({
             success: false,
             message: "Internal server error",
-            error: e.message
+            error: error.message
         });
     }
 }
@@ -164,16 +41,26 @@ const getAllUsers = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: "Internal server error",
-            error: e.message
+            error: error.message
         });
     }
 }
 
 const getUserProfile = async (req, res) => {
     try {
+        const authHeader = req.headers.authorization;
+
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return res.status(401).json({ message: "Token missing" });
+        }
+
+        const token = authHeader.split(" ")[1];
+
+        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
         const user = await prisma.user.findUnique({
             where: {
-                id: parseInt(req.params.id)
+                id: decoded.id
             },
             select: {
                 id: true,
@@ -186,21 +73,75 @@ const getUserProfile = async (req, res) => {
             success: true,
             message: "User profile fetched successfully",
             data: user,
+        });[]
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error.message
+        });
+    }
+}
+
+const deleteUser = async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const user = await prisma.user.findUnique({
+            where: {
+                id: id
+            }
+        });
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        await prisma.user.delete({
+            where: {
+                id: id
+            }
+        });
+        return res.status(200).json({
+            success: true,
+            message: "User deleted successfully",
         });
     } catch (error) {
         return res.status(500).json({
             success: false,
             message: "Internal server error",
-            error: e.message
+            error: error.message
         });
     }
 }
 
+const deleteAllUsers = async (req, res) => {
+    try {
+
+        await prisma.user.deleteMany({
+            where: {
+                email: {
+                    contains: 'com'
+                }
+            }
+        });
+        return res.status(200).json({
+            success: true,
+            message: "User deleted successfully",
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error.message
+        });
+    }
+}
 
 module.exports = {
-    signupUser,
-    loginUser,
-    profile,
     getAllUsers,
-    getUserProfile
+    getUserProfile,
+    deleteUser,
+    deleteAllUsers
 };

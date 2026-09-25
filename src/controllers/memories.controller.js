@@ -9,7 +9,7 @@ const createMemory = async (req, res) => {
                 title: title,
                 content: content,
                 imagePath: imagePath,
-                date: date,
+                memoryDate: date,
                 tags: tags,
                 userId: req.user.id
             }
@@ -122,6 +122,7 @@ const searchMemories = async (req, res) => {
             orderBy: {
                 memoryDate: "desc",
             },
+            skip: skip,
             take: limit
         });
 
