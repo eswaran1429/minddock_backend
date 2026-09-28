@@ -31,8 +31,6 @@ const authMiddleware = async (req, res, next) => {
             });
         }
 
-        // Logout clears User.token, so a signed-but-revoked token is rejected here
-        // even though it has not expired yet.
         if (!user.token || user.token !== token) {
             return res.status(401).json({
                 message: "Token revoked, please log in again",

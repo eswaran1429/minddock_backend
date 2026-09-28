@@ -126,6 +126,8 @@ const loginUser = async (req, res) => {
 
 const logoutUser = async (req, res) => {
     try {
+
+        console.log(req.user.id);
         const user = await prisma.user.update({
             where: {
                 id: req.user.id
@@ -140,6 +142,8 @@ const logoutUser = async (req, res) => {
                 createdAt: true
             }
         });
+
+
 
         return res.status(200).json({
             success: true,

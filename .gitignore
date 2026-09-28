@@ -5,3 +5,4 @@ node_modules
 .agents/
 /generated/prisma
 BACKEND_AUDIT.md
+*.md

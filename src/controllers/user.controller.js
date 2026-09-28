@@ -1,23 +1,42 @@
 const { join } = require("@prisma/client/runtime/library");
 
 const prisma = require("../config/prisma");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 
-const updateProfile = async (res, req) => {
+const updateProfile = async (req, res) => {
     try {
+        const { name, email, profileImage } = req.body;
 
-        const token = req.authorization.headers;
-        const user = prisma.user.update({
+        const updateData = {};
+
+        if (name !== undefined) updateData.name = name;
+        if (email !== undefined) updateData.email = email;
+        if (profileImage !== undefined) updateData.profileImage = profileImage;
+
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "No data provided to update",
+            });
+        }
+
+        const user = await prisma.user.update({
             where: {
-                token: token
+                id: parseInt(req.user.id),
             },
-            data: {
-                name: req.name,
-                email: req.email,
+            data: updateData,
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                createdAt: true,
+            },
+        });
 
-            }
-        })
+        return res.status(200).json({
+            success: true,
+            message: "User updated successfully",
+            data: user,
+        });
     } catch (error) {
         return res.status(500).json({
             success: false,
@@ -48,19 +67,10 @@ const getAllUsers = async (req, res) => {
 
 const getUserProfile = async (req, res) => {
     try {
-        const authHeader = req.headers.authorization;
-
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            return res.status(401).json({ message: "Token missing" });
-        }
-
-        const token = authHeader.split(" ")[1];
-
-        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
         const user = await prisma.user.findUnique({
             where: {
-                id: decoded.id
+                id: req.user.id
             },
             select: {
                 id: true,
@@ -85,10 +95,9 @@ const getUserProfile = async (req, res) => {
 
 const deleteUser = async (req, res) => {
     try {
-        const id = parseInt(req.params.id);
         const user = await prisma.user.findUnique({
             where: {
-                id: id
+                id: parseInt(req.user.id)
             }
         });
         if (!user) {
@@ -143,5 +152,6 @@ module.exports = {
     getAllUsers,
     getUserProfile,
     deleteUser,
-    deleteAllUsers
+    deleteAllUsers,
+    updateProfile
 };

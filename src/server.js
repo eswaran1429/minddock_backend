@@ -4,6 +4,7 @@ require("dotenv").config();
 const userRoutes = require("./routes/user.routes");
 const memoriesRoutes = require("./routes/memories.route");
 const authRoutes = require("./routes/auth.routes");
+const aiRoutes = require("./routes/ai.route");
 const uploadImage = require("./controllers/upload_controller");
 const upload = require("./middleware/upload");
 const notFound = require("./middleware/notFound");
@@ -17,6 +18,7 @@ app.get('/', (req, res) => {
 app.use("/", userRoutes);
 app.use("/", authRoutes);
 app.use("/memories", memoriesRoutes);
+app.use("/ai", aiRoutes);
 app.post("/upload", upload.single("image"), uploadImage);
 
 const PORT = process.env.PORT || 3000;
